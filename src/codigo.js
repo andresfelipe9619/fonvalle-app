@@ -27,9 +27,10 @@ function buscarPersona(cedula) {
         if (inscritos[i][2] == cedula) {
             Logger.log(inscritos[i]);
             var index = i + 1;
-            return { inscrito: inscritos[i], index: index };
-        } else {
-            continue;
+            var register = (inscritos[i][3] == "" || inscritos[i][3] == " ") ? false : true;
+            var inscrito = { inscrito: inscritos[i], index: index, isRegistered: register }
+            Logger.log("WHY NULL?" + inscrito);
+            return inscrito;
         }
     }
     return false;
@@ -72,13 +73,28 @@ function registrarAsistencia(formValues) {
     var inscrito = inscritos[personIndex - 1];
     Logger.log('INSCRITO ' + inscrito);
 
+    //if asistence cell is empty, we write the guesses selections
     if (asistencia.getValue() == "" || asistencia.getValue() == " ") {
-
-        invitados.map(function(invitado,i) {
-            inscritoRange.getCell(1, i+7).setValue(invitado.licor);
-            inscritoRange.getCell(1, i+8).setValue(invitado.cena);
-            
-        });
+        var j = 7;
+        for (var i = 0; i < invitados.length; i++) {
+            var invitado = invitados[i];
+            if (i > 0) {
+                var count = 0;
+                if (i % 3 == 0) {
+                    Logger.log('modulo?')
+                    j++;
+                    inscritoRange.getCell(1, i + j).setValue(adicionales[count]);
+                    count++;
+                }
+                inscritoRange.getCell(1, i + j).setValue(invitado.licor);
+                j++;
+                inscritoRange.getCell(1, i + j).setValue(invitado.cena);
+            } else {
+                inscritoRange.getCell(1, i + j).setValue(invitado.licor);
+                j++;
+                inscritoRange.getCell(1, i + j).setValue(invitado.cena);
+            }
+        }
 
         asistencia.setValue(mDate);
         numeroInvitados.setValue(invitados.length);

@@ -47,20 +47,6 @@
                         <img src="http://fonvalle.com.co/portal/images/logo-fonvalle.png" />
                     </a>
                 </div>
-                <!-- <ul class="nav navbar-nav">
-                                <li class="active">
-                                    <a href="#">Home</a>
-                                </li>
-                                <li>
-                                    <a href="#">Page 1</a>
-                                </li>
-                                <li>
-                                    <a href="#">Page 2</a>
-                                </li>
-                                <li>
-                                    <a href="#">Page 3</a>
-                                </li>
-                            </ul>-->
             </div>
         </nav>
     </header>
@@ -72,7 +58,7 @@
                     <h2>Ingrese Documento de Identidad</h2>
                     <br/>
                     <div class="input-group">
-                        <input type="number" class="form-control numeric" id="cedula_buscada" placeholder="Ingrese documento de identidad">
+                        <input type="number" required class="form-control numeric" id="cedula_buscada" placeholder="Ingrese documento de identidad">
                         <span class="input-group-btn">
                             <button id="btn-buscar" onclick="cargarInfo()" class="btn btn-primary" type="button">Buscar</button>
                         </span>
@@ -96,15 +82,15 @@
                                 <label for="staticInvitados" class="col-sm-3 col-form-label">Numero de asistentes:</label>
                                 <div class="col-sm-2">
                                     <select class="custom-select mr-sm-2" id="staticInvitados">
-                                            <option value="1">1</option>
-                                            <option value="2">2</option>
-                                            <option value="3">3</option>
-                                            <option value="4">4</option>
-                                            <option value="5">5</option>
-                                            <option value="6">6</option>
-                                            <option value="7">7</option>
-                                            <option value="8">8</option>
-                                            <option value="9">9</option>
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                        <option value="6">6</option>
+                                        <option value="7">7</option>
+                                        <option value="8">8</option>
+                                        <option value="9">9</option>
                                     </select>
                                 </div>
                                 <div class="col-sm-4">
@@ -143,29 +129,26 @@
             google.script.run.withSuccessHandler(cargarPersona).buscarPersona(cedula);
         }
         function cargarPersona(p) {
-            var persona = p.inscrito;
-            console.log('THIS IS SPARTA', p);
-            if (persona == 2) {
+            console.log('MYP', p)
+            if (!p) {
                 swal({
-                    title: 'Ya se registro el dia de hoy',
-                    text: 'La cedula ingresada ya fue registrada el dia de hoy',
-                    type: 'error',
-                });
-            } else
-                if (persona) {
-                    mostrarInfo(persona, p.index);
-                    // swal({
-                    //     title: "Registro Encontrado",
-                    //     text: persona[0] + " " + persona[1],
-                    //     type: 'success',
-                    // });
-                } else {
-                    swal({
-                        title: 'Registro No Encontrado',
+                        title: 'Registro no valido',
                         text: 'La cédula o nombre ingresado no corresponde a ninguna inscipcion,\n Acerquese a incripciones',
                         type: 'error',
                     });
-                }
+            } else {
+                var isncrito = p.inscrito;
+                if (isncrito.isRegistered) {
+                    swal({
+                        title: 'Ya se registro el dia de hoy',
+                        text: 'La cedula ingresada ya fue registrada el dia de hoy',
+                        type: 'error',
+                    });
+                } else {
+                    mostrarInfo(isncrito, p.index);
+                } 
+                
+            }
         }
 
         var PERSON_INDEX = 0;
@@ -235,7 +218,7 @@
                 title: "Exito",
                 text: "Datos almacenados de forma correcta",
                 type: 'success',
-            }).then(()=>location.reload())) : console.log('its not')
+            }).then(() => location.reload())) : console.log('its not')
         }
 
         function getFormValues(n) {
