@@ -18,23 +18,33 @@ function getInscritosFromSheet() {
     return inscritosSheet.getSheetValues(1, 1, inscritosSheet.getLastRow(), inscritosSheet.getLastColumn());
 }
 
+function getInscritosRange() {
+    var inscritosSheet = getSpreadSheet(SPREAD_SHEET_URL);
+    return inscritosSheet.getRange(1, 1, inscritosSheet.getLastRow(), inscritosSheet.getLastColumn()).getValues();
+}
+
 function buscarPersona(cedula) {
     Logger.log("Cedula: " + cedula);
-    var inscritos = getInscritosFromSheet();
+    var inscritos = getInscritosRange();
 
-    for (var i = 0; i < inscritos.length; i++) {
-        Logger.log("fila" + inscritos[i][0]);
-        if (inscritos[i][2] == cedula) {
-            Logger.log(inscritos[i]);
-            var index = i + 1;
-            var register = (inscritos[i][3] == "" || inscritos[i][3] == " ") ? false : true;
-            var inscrito = { inscrito: inscritos[i], index: index, isRegistered: register }
-            Logger.log("WHY NULL?" + inscrito);
-            return inscrito;
+    for (var inscrito in inscritos) {
+        Logger.log("INSCRITO: " + inscritos[inscrito]);
+
+        if (inscritos[inscrito][2] == cedula) {
+            var index = Number(inscrito) + 1;
+            var myInscrito = { inscrito: inscritos[inscrito], invitados: inscritos[inscrito][3], index: index, isRegistered: false }
+            Logger.log("WHY NULL?" + inscritos[inscrito]);
+            if (inscritos[inscrito][4] == "" || inscritos[inscrito][4] == " ") {
+                return myInscrito;
+            } else {
+                myInscrito.isRegistered = true;
+                return myInscrito;
+            }
         }
     }
     return false;
 }
+
 
 // function registrarVinoEnSheet(persona, valor) {}
 function myHour(date) {
@@ -52,6 +62,38 @@ function addZero(i) {
     return i;
 }
 
+function actualizaAsistencia(formValues) {
+    var inscritosSheet = getSpreadSheet(SPREAD_SHEET_URL);
+    var personIndex = formValues.index;
+    var invitados = formValues.invitados;
+    var adicionales = formValues.adicionales;
+
+    var inscritoRange = inscritosSheet.getRange(personIndex, 1, inscritosSheet.getLastRow(), inscritosSheet.getLastColumn());
+
+    Logger.log('INSCRITO ' + inscritoRange);
+    var j = 7;
+    for (var i = 1; i <= invitados.length; i++) {
+        var invitado = invitados[i - 1];
+        if (i > 1) {
+            var count = 0;
+            inscritoRange.getCell(1, i + j).setValue(invitado.licor);
+            j++;
+            inscritoRange.getCell(1, i + j).setValue(invitado.cena);
+            if (i % 3 == 0) {
+                j++;
+                inscritoRange.getCell(1, i + j).setValue(adicionales[count]);
+                count++;
+            }
+        } else {
+            inscritoRange.getCell(1, i + j).setValue(invitado.licor);
+            j++;
+            inscritoRange.getCell(1, i + j).setValue(invitado.cena);
+        }
+    }
+
+    return true;
+
+}
 function registrarAsistencia(formValues) {
     var personIndex = formValues.index;
     var invitados = formValues.invitados;
@@ -64,8 +106,8 @@ function registrarAsistencia(formValues) {
 
     //Get range for editing spreadsheet
     var inscritoRange = inscritosSheet.getRange(personIndex, 1, inscritosSheet.getLastRow(), inscritosSheet.getLastColumn());
-    var asistencia = inscritoRange.getCell(1, 4);
-    var numeroInvitados = inscritoRange.getCell(1, 5);
+    var asistencia = inscritoRange.getCell(1, 5);
+    var numeroInvitados = inscritoRange.getCell(1, 6);
 
 
     //Get raw data for displaying ti in the html's js
@@ -76,19 +118,18 @@ function registrarAsistencia(formValues) {
     //if asistence cell is empty, we write the guesses selections
     if (asistencia.getValue() == "" || asistencia.getValue() == " ") {
         var j = 7;
-        for (var i = 0; i < invitados.length; i++) {
-            var invitado = invitados[i];
-            if (i > 0) {
+        for (var i = 1; i <= invitados.length; i++) {
+            var invitado = invitados[i - 1];
+            if (i > 1) {
                 var count = 0;
+                inscritoRange.getCell(1, i + j).setValue(invitado.licor);
+                j++;
+                inscritoRange.getCell(1, i + j).setValue(invitado.cena);
                 if (i % 3 == 0) {
-                    Logger.log('modulo?')
                     j++;
                     inscritoRange.getCell(1, i + j).setValue(adicionales[count]);
                     count++;
                 }
-                inscritoRange.getCell(1, i + j).setValue(invitado.licor);
-                j++;
-                inscritoRange.getCell(1, i + j).setValue(invitado.cena);
             } else {
                 inscritoRange.getCell(1, i + j).setValue(invitado.licor);
                 j++;

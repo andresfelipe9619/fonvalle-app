@@ -82,15 +82,7 @@
                                 <label for="staticInvitados" class="col-sm-3 col-form-label">Numero de asistentes:</label>
                                 <div class="col-sm-2">
                                     <select class="custom-select mr-sm-2" id="staticInvitados">
-                                        <option value="1">1</option>
-                                        <option value="2">2</option>
-                                        <option value="3">3</option>
-                                        <option value="4">4</option>
-                                        <option value="5">5</option>
-                                        <option value="6">6</option>
-                                        <option value="7">7</option>
-                                        <option value="8">8</option>
-                                        <option value="9">9</option>
+
                                     </select>
                                 </div>
                                 <div class="col-sm-4">
@@ -125,77 +117,178 @@
     <script>
 
         function cargarInfo() {
+            $('#registro-invitados').html('');
             var cedula = $('#cedula_buscada').val();
             google.script.run.withSuccessHandler(cargarPersona).buscarPersona(cedula);
         }
+
         function cargarPersona(p) {
             console.log('MYP', p)
-            if (!p) {
+            if (p.isRegistered) {
+                cargarPersonaInfo(p);
+            } else if (!p) {
                 swal({
-                        title: 'Registro no valido',
-                        text: 'La cédula o nombre ingresado no corresponde a ninguna inscipcion,\n Acerquese a incripciones',
-                        type: 'error',
-                    });
-            } else {
-                var isncrito = p.inscrito;
-                if (isncrito.isRegistered) {
-                    swal({
-                        title: 'Ya se registro el dia de hoy',
-                        text: 'La cedula ingresada ya fue registrada el dia de hoy',
-                        type: 'error',
-                    });
-                } else {
-                    mostrarInfo(isncrito, p.index);
-                } 
-                
+                    title: 'Registro no valido',
+                    text: 'La cédula o nombre ingresado no corresponde a ninguna inscipcion,\n Acerquese a incripciones',
+                    type: 'error',
+                });
+            } else if (!p.inscrito.isRegistered) {
+                var inscrito = p.inscrito;
+                mostrarInfo(inscrito, p.index, p.invitados);
             }
         }
 
-        var PERSON_INDEX = 0;
-        function mostrarInfo(persona, index) {
+
+        function cargarPersonaInfo(p) {
+            var persona = p.inscrito;
+            PERSON_INDEX = p.index;
+            var adicionales = [];
+            var nInvitados = persona[5];
             $('#info').css('display', 'block');
             $('#staticNombre').val(persona[0] + " " + persona[1]);
             $('#staticCedula').val(persona[2]);
-            PERSON_INDEX = index;
-        }
-
-        function registraInvitados() {
+            $('#staticInvitados').append(`<option selected value=${nInvitados}>${nInvitados}</option>`)
+            $('#staticInvitados').prop('disabled', 'disabled');
+            $('#btn-inivitados').css('display', 'none');
             $('#registro-invitados').css('display', 'block');
-            var nInvitados = $('#staticInvitados').val();
 
-            for (var i = 0; i < nInvitados; i++) {
-                var fixed = i + 1;
-                $('#registro-invitados').append(`
-                    <div class="form-group row">
-                        <label class="col-sm-3 col-form-label"  style="margin-right:-20px">Invitado ${fixed}:</label>
-                        <div class="col-sm-6" style="padding-left: -20px; ">
-                            <select class="custom-select mr-sm-2" id="item-licor-${fixed}">
-                                <option value="sin_reclamo">Sin reclamar</option>
-                                <option value="Caneca_agua">Caneca de Aguardiente</option>
-                                <option value="Caneca_ron">Caneca de Ron</option>
-                                <option value="Botella_vino">Botella de Vino</option>
-                            </select>
-                        </div>
-                        <label style="margin-left: -20px; padding-left: -20px" for="item-licor-${fixed}" class="col-sm-1 col-form-label">Licor</label>                    
-                        <div class="col-sm-1 form-check" style="margin-left:30px; margin-top: 10px;">
-                                <input type="checkbox" class="form-check-input" id="item-cena-${fixed}">
-                                <label class="form-check-label" for="customControlAutosizing">Cena </label>
-                        </div>
-                    </div>
-                    `);
+
+            var j = 6;
+            for (var i = 1; i <= nInvitados; i++) {
+                var licor = persona[i + j];
+                j++;
+                var cena = persona[i + j];
+
+                addLicorAndDinnerSelect(i);
+
+                console.log('Licor', licor);
+                console.log('Cena', typeof cena);
+
+                $(`#item-licor-${i} option`).each(function () {
+                    if ($(this).val() == licor) {
+                        if (licor == 'Sin reclamar') {
+                            console.log('Options', $(this).val())
+                            $(this).prop('selected', true);
+                            $(`#item-licor-${i}`).prop('disabled', false);
+                        } else {
+                            $(this).prop('selected', true);
+                            $(`#item-licor-${i}`).prop('disabled', 'disabled');
+                        }
+
+                    }
+
+                    if (cena == 'true') {
+                        $(`#item-cena-${i}`).prop('checked', true);
+                        $(`#item-cena-${i}`).prop('disabled', 'disabled');
+                    }
+
+                });
+
+                if (i % 3 == 0) {
+                    j++;
+                    adicionales.push(persona[i + j]);
+                }
+
             }
+            console.log('ADICIONALES', adicionales);
             var count = 0;
-            for (var j = nInvitados; j > 2; j -= 2) {
+            for (var j = nInvitados; j > 2; j -= 3) {
                 count++;
                 $('#registro-invitados').append(`
                     <br/>
                     <div class="form-group row">
                     <div class="col-sm-6">
                             <select class="custom-select mr-sm-2" id="item-adicional-${count}">
-                                <option value="sin_reclamo">Sin reclamar</option>
-                                <option value="caneca_agua">Caneca de Aguardiente</option>
-                                <option value="caneca_ron">Caneca de Ron</option>
-                                <option value="botella_vino">Botella de Vino</option>
+                                <option value="Sin reclamar">Sin reclamar</option>
+                                <option value="Caneca de Aguardiente">Caneca de Aguardiente</option>
+                                <option value="Caneca de Ron">Caneca de Ron</option>
+                                <option value="Botella de Vino">Botella de Vino</option>
+                            </select>
+                        </div>
+                        <label for="item-adicional-${count}" class="col-sm-4 col-form-label">Licor adicional</label>                    
+                    </div>
+                    `)
+            }
+
+
+            $('#registro-invitados').append(`
+                <button id="btn-actualiza-asistencia"  class="btn btn-primary " type="button">Actualizar</button>
+                    `)
+
+            for (var i = 1; i <= adicionales.length; i++) {
+                if (adicionales[i - 1] == 'Sin reclamar') {
+                    $(`#item-adicional-${i} option`).each(function () {
+                        console.log('Adicional', $(this).val())
+                        if ($(this).val() == 'Sin reclamar') {
+                            $(this).prop('selected', true);
+                            $(`#item-adicional-${i}`).prop('disabled', false);
+                        }
+                    })
+                } else {
+                    $(`#item-adicional-${i} option`).each(function () {
+                        console.log($(this).val() + 'vs' + adicionales[i - 1])
+                        if ($(this).val() == adicionales[i - 1]) {
+                            $(this).prop('selected', true);
+                            $(`#item-adicional-${i}`).prop('disabled', 'disabled');
+                        }
+                    })
+
+                }
+
+
+            }
+
+
+            $('#btn-actualiza-asistencia').on('click', function () {
+                var formValues = getFormValues(nInvitados);
+                google.script.run.withSuccessHandler(mostrarResultado).actualizaAsistencia(formValues);
+            });
+        }
+
+        var PERSON_INDEX = 0;
+        function mostrarInfo(persona, index, invitados) {
+            $('#info').css('display', 'block');
+            $('#btn-inivitados').css('display', 'block');
+            $('#staticNombre').val(persona[0] + " " + persona[1]);
+            $('#staticCedula').val(persona[2]);
+
+            $("#staticInvitados option").each(function () {
+                $(this).remove();
+            });
+            for (var i = 1; i <= invitados; i++) {
+                $('#staticInvitados').append($('<option>', {
+                    value: i,
+                    text: i
+                }));
+            };
+
+            PERSON_INDEX = index;
+        }
+
+        function registraInvitados() {
+            $('#registro-invitados').css('display', 'block');
+
+            var nInvitados = $('#staticInvitados').val();
+            $('#staticInvitados').prop('disabled', 'disabled');
+            $('#btn-inivitados').css('display', 'none');
+
+
+            for (var i = 1; i <= nInvitados; i++) {
+                addLicorAndDinnerSelect(i);
+            }
+
+            var count = 0;
+            for (var j = nInvitados; j > 2; j -= 3) {
+                count++;
+                $('#registro-invitados').append(`
+                    <br/>
+                    <div class="form-group row">
+                    <div class="col-sm-6">
+                            <select class="custom-select mr-sm-2" id="item-adicional-${count}">
+                                <option value="Sin reclamar">Sin reclamar</option>
+                                <option value="Caneca de Aguardiente">Caneca de Aguardiente</option>
+                                <option value="Caneca de Ron">Caneca de Ron</option>
+                                <option value="Botella de Vino">Botella de Vino</option>
                             </select>
                         </div>
                         <label for="item-adicional-${count}" class="col-sm-4 col-form-label">Licor adicional</label>                    
@@ -210,15 +303,41 @@
                 var formValues = getFormValues(nInvitados);
                 google.script.run.withSuccessHandler(mostrarResultado).registrarAsistencia(formValues);
             });
+        }
 
+        function addLicorAndDinnerSelect(i) {
+            $('#registro-invitados').append(`
+                    <div class="form-group row">
+                        <label class="col-sm-3 col-form-label"  style="margin-right:-20px">Invitado ${i}:</label>
+                        <div class="col-sm-6" style="padding-left: -20px; ">
+                            <select class="custom-select mr-sm-2" id="item-licor-${i}">
+                                <option value="Sin reclamar">Sin reclamar</option>
+                                <option value="Caneca de Aguardiente">Caneca de Aguardiente</option>
+                                <option value="Caneca de Ron">Caneca de Ron</option>
+                                <option value="Botella de Vino">Botella de Vino</option>
+                            </select>
+                        </div>
+                        <label style="margin-left: -20px; padding-left: -20px" for="item-licor-${i}" class="col-sm-1 col-form-label">Licor</label>                    
+                        <div class="col-sm-1 form-check" style="margin-left:30px; margin-top: 10px;">
+                                <input type="checkbox" class="form-check-input" id="item-cena-${i}">
+                                <label class="form-check-label" for="customControlAutosizing">Cena </label>
+                        </div>
+                    </div>
+                    `);
         }
 
         function mostrarResultado(bool) {
-            bool ? (swal({
-                title: "Exito",
-                text: "Datos almacenados de forma correcta",
-                type: 'success',
-            }).then(() => location.reload())) : console.log('its not')
+            if (bool) {
+                swal({
+                    title: "Exito",
+                    text: "Datos almacenados de forma correcta",
+                    type: 'success',
+                });
+                setTimeout(function () {
+                    location.reload();
+                }, 1000)
+
+            } else console.log('its not')
         }
 
         function getFormValues(n) {
@@ -237,7 +356,7 @@
                 var adicional = $(`#item-adicional-${count}`).val();
                 results.adicionales.push(adicional);
             }
-            console.log(results);
+            console.log('RESULTS-->', results);
             return results;
         }
 
